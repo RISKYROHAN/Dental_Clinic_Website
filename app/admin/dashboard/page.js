@@ -64,17 +64,26 @@ export default function AdminDashboard() {
   };
 
   const updateStatus = async (id, status) => {
+    // Optimistic UI Update - Instant feedback for the user
+    setEnquiries((prev) => 
+      prev.map((eq) => eq._id === id ? { ...eq, status } : eq)
+    );
+
     try {
       const res = await fetch(`/api/admin/enquiries?id=${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status })
       });
-      if (res.ok) {
+      
+      // If the backend request failed for some reason, we revert the optimistic update
+      // by pulling the real data again from the database.
+      if (!res.ok) {
         fetchEnquiries();
       }
     } catch (err) {
       console.error(err);
+      fetchEnquiries();
     }
   };
 
