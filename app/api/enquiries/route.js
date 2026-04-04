@@ -1,9 +1,25 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/dbConnect';
 import Enquiry from '@/models/Enquiry';
+import getRedisClient from '@/lib/redis';
 
 export async function POST(request) {
   try {
+    const ip = request.headers.get('x-forwarded-for') || 'unknown';
+    const redis = await getRedisClient();
+    
+    // Rate Limiting (10 requests per hour)
+    const rateLimitKey = `rate_limit:enquiry:${ip}`;
+    if (ip !== 'unknown') {
+      const currentCount = await redis.incr(rateLimitKey);
+      if (currentCount === 1) {
+        await redis.expire(rateLimitKey, 3600); // 1 hour
+      }
+      if (currentCount > 10) {
+        return NextResponse.json({ error: 'Too many requests. Please try again later.' }, { status: 429 });
+      }
+    }
+
     const body = await request.json();
     const { name, phone, preferredDate, reason } = body;
 
@@ -21,6 +37,11 @@ export async function POST(request) {
       preferredDate,
       reason
     });
+
+    // Invalidate Admin Dashboard Cache
+    if (redis.isOpen) {
+      await redis.del('admin:enquiries');
+    }
 
     return NextResponse.json({ success: true, data: enquiry }, { status: 201 });
   } catch (error) {

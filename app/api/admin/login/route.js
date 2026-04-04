@@ -3,11 +3,26 @@ import bcrypt from 'bcryptjs';
 import { SignJWT } from 'jose';
 import dbConnect from '@/lib/dbConnect';
 import Admin from '@/models/Admin';
+import getRedisClient from '@/lib/redis';
 
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET || 'fallback_secret_key_for_development');
 
 export async function POST(request) {
   try {
+    const ip = request.headers.get('x-forwarded-for') || 'unknown';
+    const redis = await getRedisClient();
+    const rateLimitKey = `rate_limit:login:${ip}`;
+
+    if (ip !== 'unknown') {
+      const currentCount = await redis.incr(rateLimitKey);
+      if (currentCount === 1) {
+        await redis.expire(rateLimitKey, 900); // 15 mins
+      }
+      if (currentCount > 5) {
+        return NextResponse.json({ error: 'Too many login attempts. Please try again in 15 minutes.' }, { status: 429 });
+      }
+    }
+
     const { username, password } = await request.json();
 
     if (!username || !password) {
@@ -24,6 +39,11 @@ export async function POST(request) {
     const isMatch = await bcrypt.compare(password, admin.password);
     if (!isMatch) {
       return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
+    }
+
+    // Clear rate limit on successful login
+    if (ip !== 'unknown' && redis.isOpen) {
+      await redis.del(rateLimitKey);
     }
 
     // Generate JWT via jose
