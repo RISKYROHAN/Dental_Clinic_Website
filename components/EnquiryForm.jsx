@@ -9,12 +9,34 @@ export default function EnquiryForm() {
     e.preventDefault();
     setStatus('loading');
 
-    // Fallback Mock Submit to mimic API Request
-    setTimeout(() => {
+    const formData = {
+      name: e.target[0].value,
+      phone: e.target[1].value,
+      preferredDate: e.target[2].value,
+      reason: e.target[3].value,
+    };
+
+    try {
+      const response = await fetch('/api/enquiries', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Submission failed');
+      }
+
       setStatus('success');
       e.target.reset();
       setTimeout(() => setStatus('idle'), 5000);
-    }, 1500);
+    } catch (error) {
+      console.error(error);
+      alert('Failed to submit. Please try again.');
+      setStatus('idle');
+    }
   };
 
   return (
