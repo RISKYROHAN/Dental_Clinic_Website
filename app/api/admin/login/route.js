@@ -10,7 +10,13 @@ const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET || 'fallback_
 export async function POST(request) {
   try {
     const ip = request.headers.get('x-forwarded-for') || 'unknown';
-    const redis = await getRedisClient();
+    
+    // Connect to both Redis and MongoDB in parallel to drastically improve connection speed
+    const [redis] = await Promise.all([
+      getRedisClient(),
+      dbConnect()
+    ]);
+    
     const rateLimitKey = `rate_limit:login:${ip}`;
 
     if (ip !== 'unknown') {
@@ -28,8 +34,6 @@ export async function POST(request) {
     if (!username || !password) {
       return NextResponse.json({ error: 'Please provide username and password' }, { status: 400 });
     }
-
-    await dbConnect();
 
     const admin = await Admin.findOne({ username });
     if (!admin) {
