@@ -9,7 +9,10 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@ai-sdk/google": "^3.0.58",
+    "@ai-sdk/react": "^3.0.148",
     "@aws-sdk/client-s3": "^3.1022.0",
+    "ai": "^6.0.146",
     "bcryptjs": "^3.0.3",
     "jose": "^6.2.2",
     "lucide-react": "^1.7.0",
