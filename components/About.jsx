@@ -1,11 +1,12 @@
+import Image from 'next/image';
+
 export default function About() {
   return (
-    <section id="about" className="py-24 bg-slate-50 border-y border-slate-200">
+    <section id="about" className="py-12 bg-slate-50 border-y border-slate-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col md:flex-row items-center gap-12 bg-white rounded-3xl p-8 md:p-12 shadow-xl shadow-slate-200/50">
-          <div className="w-48 h-48 md:w-64 md:h-64 rounded-full bg-teal-100 flex-shrink-0 flex items-center justify-center border-4 border-teal-50">
-            {/* Avatar placeholder if no real image */}
-            <span className="text-teal-600 font-heading font-bold text-6xl">Dr. S</span>
+          <div className="w-48 h-48 md:w-64 md:h-64 rounded-full bg-teal-100 flex-shrink-0 flex items-center justify-center border-4 border-teal-50 relative overflow-hidden shadow-inner">
+            <Image src="/doctor.png" alt="Dr. John Smith" fill className="object-cover" />
           </div>
           <div>
             <div className="mb-2">
