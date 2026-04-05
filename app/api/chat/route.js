@@ -9,7 +9,7 @@ export async function POST(req) {
     const { messages } = await req.json();
 
     const result = await streamText({
-      model: google('gemini-2.5-flash'), // Extremely fast gemini flash model
+      model: google('gemma-3-1b-it'), // Utilizing Gemma 3 1B as requested
       system: `You are the friendly, helpful AI Receptionist for "Digital Clinic". 
       The clinic is located at: 1, Camac St, Kolkata, West Bengal 700016.
       Operating Hours: Mon - Sat: 9:00 AM - 8:00 PM.
