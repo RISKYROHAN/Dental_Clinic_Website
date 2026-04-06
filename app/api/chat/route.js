@@ -9,7 +9,7 @@ export async function POST(req) {
     const { messages } = await req.json();
 
     const result = await streamText({
-      model: google('gemini-3-flash-preview'), // Updated to Gemini 3 Flash per user selection
+      model: google('gemini-3.1-flash-lite-preview'), // Updated to Gemini 3 Flash per user selection
       system: `You are the friendly, helpful AI Receptionist for "Digital Clinic". 
       The clinic is located at: 1, Camac St, Kolkata, West Bengal 700016.
       Operating Hours: Mon - Sat: 9:00 AM - 8:00 PM.
@@ -38,7 +38,7 @@ export async function POST(req) {
       cause: error.cause
     });
     return new Response(
-      JSON.stringify({ error: 'Chat processing failed', details: error.message }), 
+      JSON.stringify({ error: 'Chat processing failed', details: error.message }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }
