@@ -7,12 +7,26 @@ import { MessageSquare, X, Send } from 'lucide-react';
 export default function ChatBot() {
   const [isOpen, setIsOpen] = useState(false);
   const [localInput, setLocalInput] = useState("");
-  const { messages, append, sendMessage, isLoading } = useChat();
+  const { messages, append, sendMessage, isLoading, error } = useChat();
+  const scrollRef = useRef(null);
+  const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
+  
+  const handleScroll = () => {
+    const node = scrollRef.current;
+    if (node) {
+      // If user is within 100px of bottom, they 'want' to auto-scroll
+      const isAtBottom = node.scrollHeight - node.scrollTop <= node.clientHeight + 100;
+      setShouldAutoScroll(isAtBottom);
+    }
+  };
   
   const handleCustomSubmit = (e) => {
     e.preventDefault();
     const txt = localInput.trim();
     if (!txt) return;
+    
+    // Force auto-scroll to the bottom when the user sends a new message
+    setShouldAutoScroll(true);
     
     // Safely support different versions of the AI SDK
     if (append) {
@@ -25,10 +39,12 @@ export default function ChatBot() {
   };
   const messagesEndRef = useRef(null);
 
-  // Auto scroll to bottom smoothly
+  // Auto scroll to bottom smoothly if shouldAutoScroll is true
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    if (shouldAutoScroll) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages, shouldAutoScroll]);
 
   const toggleChat = () => setIsOpen(!isOpen);
 
@@ -36,10 +52,10 @@ export default function ChatBot() {
     <div className="fixed bottom-6 right-6 z-50">
       {/* Chat Window */}
       {isOpen && (
-        <div className="mb-4 bg-white rounded-3xl shadow-2xl border border-slate-200 w-80 sm:w-96 flex flex-col overflow-hidden transition-all">
+        <div className="mb-4 bg-white rounded-3xl shadow-2xl border border-slate-200 w-80 sm:w-96 flex flex-col overflow-hidden transition-all max-h-[80vh] h-[500px]">
           
           {/* Header */}
-          <div className="bg-teal-600 p-4 text-white flex justify-between items-center shadow-sm">
+          <div className="bg-teal-600 p-4 text-white flex-shrink-0 flex justify-between items-center shadow-sm">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-teal-500 rounded-full flex justify-center items-center font-bold font-heading shadow-md">DC</div>
               <div>
@@ -53,7 +69,11 @@ export default function ChatBot() {
           </div>
 
           {/* Messages Area */}
-          <div className="flex-1 p-4 h-96 overflow-y-auto bg-slate-50 flex flex-col gap-4">
+          <div 
+            ref={scrollRef}
+            onScroll={handleScroll}
+            className="flex-1 p-4 overflow-y-auto bg-slate-50 flex flex-col gap-4 scroll-smooth overscroll-contain"
+          >
             {messages.length === 0 && (
               <div className="text-center text-slate-500 my-auto text-sm">
                 <p>Hello! I am the Digital Clinic assistant.</p>
@@ -75,7 +95,7 @@ export default function ChatBot() {
               </div>
             ))}
             
-            {isLoading && (
+             {isLoading && (
               <div className="flex justify-start">
                  <div className="max-w-[85%] bg-white border border-slate-200 text-slate-500 rounded-2xl rounded-bl-sm px-4 py-3 shadow-sm flex items-center gap-1.5">
                    <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce"></div>
@@ -84,12 +104,20 @@ export default function ChatBot() {
                  </div>
               </div>
             )}
+
+            {error && (
+              <div className="flex justify-center">
+                <div className="bg-red-50 text-red-600 text-xs px-3 py-2 rounded-lg border border-red-100">
+                  Failed to connect. Please try again.
+                </div>
+              </div>
+            )}
             
             <div ref={messagesEndRef} />
           </div>
 
           {/* Input Area */}
-          <form onSubmit={handleCustomSubmit} className="p-3 bg-white border-t border-slate-100 flex gap-2">
+          <form onSubmit={handleCustomSubmit} className="p-3 bg-white border-t border-slate-100 flex-shrink-0 flex gap-2">
             <input
               value={localInput}
               onChange={(e) => setLocalInput(e.target.value)}
